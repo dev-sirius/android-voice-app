@@ -10,8 +10,10 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import android.app.Activity;
@@ -89,7 +92,7 @@ return sb.append(s2).toString();
 public static void testIt() throws IOException, NoSuchAlgorithmException, KeyManagementException {
 
 
-     URL url = new URL("https://google.com");
+    /* URL url = new URL("https://google.com");
 
      HttpsURLConnection con = (HttpsURLConnection)url.openConnection();
      con.setRequestMethod( "POST" );
@@ -127,7 +130,6 @@ public static void testIt() throws IOException, NoSuchAlgorithmException, KeyMan
      con.setSSLSocketFactory(sslContext.getSocketFactory());
      tap_on_mic.setText("22");
      tap_on_mic.setText("23");
-     try {
      OutputStream output = con.getOutputStream();  
      
      tap_on_mic.setText("2");
@@ -136,11 +138,9 @@ public static void testIt() throws IOException, NoSuchAlgorithmException, KeyMan
      output.write(s.getBytes());
      output.flush();
      output.close();
-     }catch(Exception e){
-    	 tap_on_mic.setText("Bitch");
-     }
+    
      int responseCode = con.getResponseCode();
-     try {
+     
      InputStream inputStream;
      if (responseCode == HttpURLConnection.HTTP_OK) {
          inputStream = con.getInputStream();
@@ -157,10 +157,44 @@ public static void testIt() throws IOException, NoSuchAlgorithmException, KeyMan
     	 MainActivity.tap_on_mic.setText(line);
      }
      tap_on_mic.setText("4");
-     inputStream.close();
-     }catch(Exception e){
-    	 tap_on_mic.setText("Bitch2");
-     }
+     inputStream.close(); */
+	
+	
+	// Load CAs from an InputStream
+	// (could be from a resource or ByteArrayInputStream or ...)
+	//CertificateFactory cf = CertificateFactory.getInstance("X.509");
+	// From https://www.washington.edu/itconnect/security/ca/load-der.crt
+	//InputStream caInput = new BufferedInputStream(new FileInputStream("load-der.crt"));
+	//Certificate ca;
+	//try {
+	    //ca = cf.generateCertificate(caInput);
+	   // System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
+	//} finally {
+	//    caInput.close();
+	//}
+
+	// Create a KeyStore containing our trusted CAs
+	String keyStoreType = KeyStore.getDefaultType();
+	KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+	keyStore.load(null, null);
+	keyStore.setCertificateEntry("ca", ca);
+
+	// Create a TrustManager that trusts the CAs in our KeyStore
+	String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+	TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+	tmf.init(keyStore);
+
+	// Create an SSLContext that uses our TrustManager
+	SSLContext context = SSLContext.getInstance("TLS");
+	context.init(null, tmf.getTrustManagers(), null);
+
+	// Tell the URLConnection to use a SocketFactory from our SSLContext
+	URL url = new URL("https://certs.cac.washington.edu/CAtest/");
+	HttpsURLConnection urlConnection =
+	    (HttpsURLConnection)url.openConnection();
+	urlConnection.setSSLSocketFactory(context.getSocketFactory());
+	InputStream in = urlConnection.getInputStream();
+	//copyInputStreamToOutputStream(in, System.out);
  }
  
     /**
