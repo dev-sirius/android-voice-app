@@ -1,37 +1,27 @@
 package com.example.cat;
  
-import java.io.BufferedReader;
-import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
+import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ImageButton;
@@ -44,7 +34,8 @@ public class MainActivity extends Activity {
     private TextView txtSpeechInput;
     private ImageButton btnSpeak;
     private final int REQ_CODE_SPEECH_INPUT = 100;
-    static TextView tap_on_mic; 
+    static TextView tap_on_mic;
+	private static Socket s; 
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +51,7 @@ public class MainActivity extends Activity {
  
         // hide the action bar
         getActionBar().hide();
- 
+        
         btnSpeak.setOnClickListener(new View.OnClickListener() {
  
             @Override
@@ -89,112 +80,23 @@ for (int i = 0, count = 32 - s2.length(); i < count; i++) {
 return sb.append(s2).toString();
 }
 	
-public static void testIt() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+public static void testIt(){
 
+	try
+    {
 
-    /* URL url = new URL("https://google.com");
+        s = new Socket("10.23.46.203", 14288);
+        
+        String q = "qwweetwtguwfgu";
 
-     HttpsURLConnection con = (HttpsURLConnection)url.openConnection();
-     con.setRequestMethod( "POST" );
-     con.setDoOutput(true);
-     con.setDoInput(true);
-     
-     SSLContext sslContext = SSLContext.getInstance("TLS");
+        s.getOutputStream().write(q.getBytes());
+        tap_on_mic.setText("OK");
 
-     TrustManager[] trustManagers = new TrustManager[] {
-         new X509TrustManager() {
+    }
+    catch(Exception e)
+    {tap_on_mic.setText("OK1");}
+	 
 
-             public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                 return null;
-             }
-
-             public void checkClientTrusted(X509Certificate[] certs, String authType) {  }
-
-             public void checkServerTrusted(X509Certificate[] certs, String authType) {  }
-
-         }
-     };
-     tap_on_mic.setText("0");
-     HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-
-         public boolean verify(String s, SSLSession sslSession) {
-             return s.equals(sslSession.getPeerHost());
-         }
-     };
-     con.setHostnameVerifier(hostnameVerifier);
-     
-     tap_on_mic.setText("1");
-     
-     sslContext.init(null, trustManagers, null);
-     tap_on_mic.setText("21");
-     con.setSSLSocketFactory(sslContext.getSocketFactory());
-     tap_on_mic.setText("22");
-     tap_on_mic.setText("23");
-     OutputStream output = con.getOutputStream();  
-     
-     tap_on_mic.setText("2");
-     String s = "data="+MainActivity.getHash("{\"method\":\"UPDATE\",\"type\":\"TEMPERATURE\",\"id\":234,\"temperature\":23.9}")+"{\"method\":\"UPDATE\",\"type\":\"TEMPERATURE\",\"id\":234,\"temperature\":23.9}";
-
-     output.write(s.getBytes());
-     output.flush();
-     output.close();
-    
-     int responseCode = con.getResponseCode();
-     
-     InputStream inputStream;
-     if (responseCode == HttpURLConnection.HTTP_OK) {
-         inputStream = con.getInputStream();
-     } else {
-         inputStream = con.getErrorStream();
-     }
-     tap_on_mic.setText("3");
-     // Process the response
-     BufferedReader reader;
-     String line = "";
-     reader = new BufferedReader( new InputStreamReader( inputStream ) );
-     while( ( line = reader.readLine() ) != null )
-     {
-    	 MainActivity.tap_on_mic.setText(line);
-     }
-     tap_on_mic.setText("4");
-     inputStream.close(); */
-	
-	
-	// Load CAs from an InputStream
-	// (could be from a resource or ByteArrayInputStream or ...)
-	//CertificateFactory cf = CertificateFactory.getInstance("X.509");
-	// From https://www.washington.edu/itconnect/security/ca/load-der.crt
-	//InputStream caInput = new BufferedInputStream(new FileInputStream("load-der.crt"));
-	//Certificate ca;
-	//try {
-	    //ca = cf.generateCertificate(caInput);
-	   // System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
-	//} finally {
-	//    caInput.close();
-	//}
-
-	// Create a KeyStore containing our trusted CAs
-	String keyStoreType = KeyStore.getDefaultType();
-	KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-	keyStore.load(null, null);
-	keyStore.setCertificateEntry("ca", ca);
-
-	// Create a TrustManager that trusts the CAs in our KeyStore
-	String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-	TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-	tmf.init(keyStore);
-
-	// Create an SSLContext that uses our TrustManager
-	SSLContext context = SSLContext.getInstance("TLS");
-	context.init(null, tmf.getTrustManagers(), null);
-
-	// Tell the URLConnection to use a SocketFactory from our SSLContext
-	URL url = new URL("https://certs.cac.washington.edu/CAtest/");
-	HttpsURLConnection urlConnection =
-	    (HttpsURLConnection)url.openConnection();
-	urlConnection.setSSLSocketFactory(context.getSocketFactory());
-	InputStream in = urlConnection.getInputStream();
-	//copyInputStreamToOutputStream(in, System.out);
  }
  
     /**
@@ -231,21 +133,9 @@ public static void testIt() throws IOException, NoSuchAlgorithmException, KeyMan
                 txtSpeechInput.setText(result.get(0));
 
                 	if(dictionary.containsKey(result.get(0))){
-                	 tap_on_mic.setText("команда распознана " + result.get(0));
-						try {
+                		tap_on_mic.setText("команда распознана " + result.get(0));
 						    MainActivity.testIt();
-						    tap_on_mic.setText("OK");
-						} catch (KeyManagementException e) {
-							tap_on_mic.setText("1");
-							e.printStackTrace();
-						} catch (NoSuchAlgorithmException e) {
-							tap_on_mic.setText("2");
-							e.printStackTrace();
-						} catch (IOException e) {
-							
-							e.printStackTrace();
-						}
-                	 
+						    
             		 	}
                 	else{
                 		tap_on_mic.setText("команда не распознана");
