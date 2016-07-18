@@ -1,28 +1,42 @@
 package com.example.cat;
  
+import java.lang.reflect.Method;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
+import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Locale;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
  
 public class MainActivity extends Activity {
 	private HashMap<String, String> dictionary = new HashMap<String, String>();
     private TextView txtSpeechInput;
     private ImageButton btnSpeak;
     private final int REQ_CODE_SPEECH_INPUT = 100;
-    TextView tap_on_mic; 
+    static TextView tap_on_mic;
+	private static Socket s; 
  
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +51,7 @@ public class MainActivity extends Activity {
  
         // hide the action bar
         getActionBar().hide();
- 
+        
         btnSpeak.setOnClickListener(new View.OnClickListener() {
  
             @Override
@@ -47,6 +61,43 @@ public class MainActivity extends Activity {
         });
  
     }
+    
+public static String getHash(String str) throws NoSuchAlgorithmException,
+	UnsupportedEncodingException {
+
+MessageDigest m = MessageDigest.getInstance("MD5");
+m.reset();
+
+m.update(str.getBytes("utf-8"));
+
+String s2 = new BigInteger(1, m.digest()).toString(16);
+StringBuilder sb = new StringBuilder(32);
+
+for (int i = 0, count = 32 - s2.length(); i < count; i++) {
+	sb.append("0");
+}
+
+return sb.append(s2).toString();
+}
+	
+public static void testIt(){
+
+	try
+    {
+
+        s = new Socket("10.23.46.203", 14288);
+        
+        String q = "qwweetwtguwfgu";
+
+        s.getOutputStream().write(q.getBytes());
+        tap_on_mic.setText("OK");
+
+    }
+    catch(Exception e)
+    {tap_on_mic.setText("OK1");}
+	 
+
+ }
  
     /**
      * Showing google speech input dialog
@@ -82,7 +133,9 @@ public class MainActivity extends Activity {
                 txtSpeechInput.setText(result.get(0));
 
                 	if(dictionary.containsKey(result.get(0))){
-                	 tap_on_mic.setText("команда распознана " + result.get(0));
+                		tap_on_mic.setText("команда распознана " + result.get(0));
+						    MainActivity.testIt();
+						    
             		 	}
                 	else{
                 		tap_on_mic.setText("команда не распознана");
